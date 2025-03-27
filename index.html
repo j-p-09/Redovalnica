@@ -67,20 +67,11 @@
         <button onclick="zapriVseModalne()">Prekliči</button>
     </div>
 
-    <div class="modal" id="popraviOcenoModal">
-        <h2>Popravi Oceno</h2>
-        <div id="popraviOcenoInfo"></div>
-        <button onclick="popraviOcenoPotrdi()">Potrdi spremembo</button>
-        <button onclick="izbrisiOceno()">Izbriši oceno</button>
-        <button onclick="zapriVseModalne()">Prekliči</button>
-    </div>
-
     <script>
         let geslo = "GESLO";
         let izbranPredmet = "";
         let novaOcena = "";
         let izbraniGumb = null;
-        let izbranaOcenaIndex = null;
 
         const predmeti = [
             "Matematika", "Slovenščina", "Angleščina", "Nemščina",
@@ -135,34 +126,13 @@
         function popraviOceno(index) {
             let ocene = JSON.parse(localStorage.getItem(izbranPredmet));
             let o = ocene[index];
-            izbranaOcenaIndex = index;
 
-            document.getElementById("popraviOcenoInfo").innerHTML = `
-                Ocena: ${o.ocena} <br>
-                Tip: ${o.tip} <br>
-                Opombe: ${o.opombe}
-            `;
-
-            prikaziModal("popraviOcenoModal");
-        }
-
-        function popraviOcenoPotrdi() {
-            let ocene = JSON.parse(localStorage.getItem(izbranPredmet));
-            let novaOcena = prompt("Vnesi novo oceno:", ocene[izbranaOcenaIndex].ocena);
-            if (novaOcena !== null && novaOcena !== "") {
-                ocene[izbranaOcenaIndex].ocena = novaOcena;
+            let nova = prompt(`Popravi oceno (trenutna: ${o.ocena})`, o.ocena);
+            if (nova !== null && nova !== "") {
+                o.staraOcena = o.ocena;
+                o.ocena = nova;
+                ocene[index] = o;
                 localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
-                zapriVseModalne();
-                prikaziOcene();
-            }
-        }
-
-        function izbrisiOceno() {
-            let ocene = JSON.parse(localStorage.getItem(izbranPredmet));
-            if (confirm("Ali ste prepričani, da želite izbrisati to oceno?")) {
-                ocene.splice(izbranaOcenaIndex, 1);
-                localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
-                zapriVseModalne();
                 prikaziOcene();
             }
         }
