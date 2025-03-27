@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Šolski Sledilnik</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center; padding: 20px; }
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px; }
         .container { display: none; max-width: 600px; margin: auto; }
         .predmet { display: inline-block; padding: 15px 20px; margin: 10px; background: #ffcc00; border-radius: 50px; cursor: pointer; font-weight: bold; }
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; z-index: 1002; }
@@ -13,11 +13,8 @@
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         td, th { border: 1px solid #ddd; padding: 8px; text-align: center; }
         .red { font-weight: bold; color: red; } .blue { font-weight: bold; color: blue; } .purple { font-weight: bold; color: purple; } .black { font-weight: bold; color: black; }
-        .login { margin-top: 50px; }
-        .hidden { display: none; }
-        button { display: block; margin: 10px auto; padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: white; border: 1px solid #ddd; border-radius: 5px; transition: background-color 0.3s; }
-        button:hover { background-color: #f1f1f1; }
-        select, textarea { width: 100%; margin-top: 10px; padding: 10px; font-size: 16px; }
+        .staraOcena { font-size: 12px; opacity: 0.6; }
+        button { display: block; margin: 10px auto; padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: white; border: 1px solid #ddd; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -39,10 +36,7 @@
         <h2 id="modalTitle"></h2>
         <table>
             <thead>
-                <tr>
-                    <th>Ocena</th>
-                    <th>?</th>
-                </tr>
+                <tr><th>Ocena</th><th>?</th></tr>
             </thead>
             <tbody id="oceneTbody"></tbody>
         </table>
@@ -120,16 +114,24 @@
             ocene.forEach((o, i) => {
                 let row = `<tr>
                     <td class="${o.barva}">${o.ocena}</td>
-                    <td><button onclick="poglejPodrobnosti(${i})">?</button></td>
+                    <td><button onclick="popraviOceno(${i})">?</button></td>
                 </tr>`;
                 tbody.innerHTML += row;
             });
         }
 
-        function poglejPodrobnosti(index) {
+        function popraviOceno(index) {
             let ocene = JSON.parse(localStorage.getItem(izbranPredmet));
             let o = ocene[index];
-            alert(`Ocena: ${o.ocena}\nTip: ${o.tip}\nOpombe: ${o.opombe}`);
+
+            let nova = prompt(`Popravi oceno (trenutna: ${o.ocena})`, o.ocena);
+            if (nova !== null && nova !== "") {
+                o.staraOcena = o.ocena;
+                o.ocena = nova;
+                ocene[index] = o;
+                localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
+                prikaziOcene();
+            }
         }
 
         function odpriVnos() {
@@ -139,20 +141,18 @@
 
         function izberiOceno(ocena) {
             novaOcena = ocena;
-            alert("Izbrali ste oceno: " + novaOcena);
         }
 
         function shraniOceno() {
             let tip = document.getElementById("tipOcene").value;
             let opombe = document.getElementById("opombe").value;
-            let barva = tip;
 
             if (!novaOcena) {
                 alert("Izberite oceno!");
                 return;
             }
 
-            let ocena = { ocena: novaOcena, tip, barva, opombe };
+            let ocena = { ocena: novaOcena, tip, barva: tip, opombe };
             let ocene = JSON.parse(localStorage.getItem(izbranPredmet)) || [];
             ocene.push(ocena);
             localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
