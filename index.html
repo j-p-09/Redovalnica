@@ -8,8 +8,8 @@
         body { font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center; padding: 20px; }
         .container { display: none; max-width: 600px; margin: auto; }
         .predmet { display: inline-block; padding: 15px 20px; margin: 10px; background: #ffcc00; border-radius: 50px; cursor: pointer; font-weight: bold; }
-        .modal, .overlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; }
-        .overlay { width: 100%; height: 100%; background: rgba(0,0,0,0.3); top: 0; left: 0; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; z-index: 1002; }
+        .overlay { display: none; position: fixed; width: 100%; height: 100%; background: rgba(0,0,0,0.3); top: 0; left: 0; z-index: 1001; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         td, th { border: 1px solid #ddd; padding: 8px; text-align: center; }
         .red { font-weight: bold; color: red; } .blue { font-weight: bold; color: blue; } .purple { font-weight: bold; color: purple; } .black { font-weight: bold; color: black; }
@@ -33,7 +33,7 @@
         <div id="predmeti"></div>
     </div>
 
-    <div class="overlay" id="overlay"></div>
+    <div class="overlay" id="overlay" onclick="zapriVseModalne()"></div>
 
     <div class="modal" id="ocenaModal">
         <h2 id="modalTitle"></h2>
@@ -47,7 +47,7 @@
             <tbody id="oceneTbody"></tbody>
         </table>
         <button onclick="odpriVnos()">Vpis Ocene</button>
-        <button onclick="zapriModal()">Zapri</button>
+        <button onclick="zapriVseModalne()">Zapri</button>
     </div>
 
     <div class="modal" id="vnosModal">
@@ -68,42 +68,22 @@
         </select>
         <textarea id="opombe" placeholder="Opombe..."></textarea>
         <button onclick="shraniOceno()">Shrani Oceno</button>
-        <button onclick="zapriVnos()">Prekliči</button>
-    </div>
-
-    <div class="modal" id="podrobnostiModal">
-        <h2 id="podrobnostiTitle"></h2>
-        <p id="podrobnostiText"></p>
-        <button onclick="popraviOceno()">Popravi</button>
-        <button onclick="izbrisiOceno()">Izbriši</button>
-        <button onclick="zapriPodrobnosti()">Zapri</button>
+        <button onclick="zapriVseModalne()">Prekliči</button>
     </div>
 
     <script>
         let geslo = "GESLO";
         let izbranPredmet = "";
-        let izbranIndex = -1;
         let novaOcena = "";
 
-        // Seznam predmetov
         const predmeti = [
-            "Matematika",
-            "Slovenščina",
-            "Angleščina",
-            "Nemščina",
-            "Grafični in medijski procesi",
-            "Grafično oblikovanje",
-            "Informacijsko komunikacijska tehnologija",
-            "Kemija",
-            "Fizika",
-            "Geografija",
-            "Izbrana poglavja matematike",
-            "Športna",
-            "Umetnost",
-            "Zgodovina"
+            "Matematika", "Slovenščina", "Angleščina", "Nemščina",
+            "Grafični in medijski procesi", "Grafično oblikovanje",
+            "Informacijsko komunikacijska tehnologija", "Kemija",
+            "Fizika", "Geografija", "Izbrana poglavja matematike",
+            "Športna", "Umetnost", "Zgodovina"
         ];
 
-        // Preveri geslo in omogoči dostop
         function preveriGeslo() {
             if (document.getElementById("password").value === geslo) {
                 document.querySelector(".login").classList.add("hidden");
@@ -114,7 +94,6 @@
             }
         }
 
-        // Prikaz predmetov
         function prikaziPredmete() {
             let div = document.getElementById("predmeti");
             div.innerHTML = "";
@@ -127,16 +106,13 @@
             });
         }
 
-        // Odpri modal za ocene
         function odpriOcene(predmet) {
             izbranPredmet = predmet;
             document.getElementById("modalTitle").textContent = predmet;
             prikaziOcene();
-            document.getElementById("ocenaModal").style.display = "block";
-            document.getElementById("overlay").style.display = "block";
+            prikaziModal("ocenaModal");
         }
 
-        // Prikaz ocen iz localStorage
         function prikaziOcene() {
             let ocene = JSON.parse(localStorage.getItem(izbranPredmet)) || [];
             let tbody = document.getElementById("oceneTbody");
@@ -150,82 +126,50 @@
             });
         }
 
-        // Poglej podrobnosti ocene
         function poglejPodrobnosti(index) {
-            izbranIndex = index;
             let ocene = JSON.parse(localStorage.getItem(izbranPredmet));
             let o = ocene[index];
-            document.getElementById("podrobnostiTitle").textContent = izbranPredmet + " - " + o.ocena;
-            document.getElementById("podrobnostiText").textContent = "Opombe: " + (o.opombe || "Ni opomb");
-            document.getElementById("podrobnostiModal").style.display = "block";
+            alert(`Ocena: ${o.ocena}\nTip: ${o.tip}\nOpombe: ${o.opombe}`);
         }
 
-        // Funkcija za brisanje ocene
-        function izbrisiOceno() {
-            let ocene = JSON.parse(localStorage.getItem(izbranPredmet));
-            ocene.splice(izbranIndex, 1);
-            localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
-            prikaziOcene();
-            zapriPodrobnosti();
-        }
-
-        // Funkcija za popravljanje ocene
-        function popraviOceno() {
-            let ocene = JSON.parse(localStorage.getItem(izbranPredmet));
-            let staraOcena = ocene[izbranIndex].ocena;
-            let nova = prompt("Vnesi novo oceno:", staraOcena);
-            if (nova) {
-                ocene[izbranIndex].ocena = `${staraOcena} → ${nova}`;
-                localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
-                prikaziOcene();
-            }
-            zapriPodrobnosti();
-        }
-
-        // Funkcija za vnos nove ocene
         function odpriVnos() {
             document.getElementById("vnosTitle").textContent = izbranPredmet;
-            document.getElementById("vnosModal").style.display = "block";
+            prikaziModal("vnosModal");
         }
 
-        // Izberi oceno (tip)
         function izberiOceno(ocena) {
             novaOcena = ocena;
             alert("Izbrali ste oceno: " + novaOcena);
         }
 
-        // Shrani oceno
         function shraniOceno() {
             let tip = document.getElementById("tipOcene").value;
             let opombe = document.getElementById("opombe").value;
-            let barva = tip; // Na osnovi tipa izberemo barvo
+            let barva = tip;
 
-            // Če ni izbran tip ocene, pokažemo opozorilo
             if (!novaOcena) {
                 alert("Izberite oceno!");
                 return;
             }
 
-            let ocena = {
-                ocena: novaOcena,
-                tip: tip,
-                barva: barva,
-                opombe: opombe
-            };
-
+            let ocena = { ocena: novaOcena, tip, barva, opombe };
             let ocene = JSON.parse(localStorage.getItem(izbranPredmet)) || [];
             ocene.push(ocena);
             localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
 
-            // Zapri modal in osveži seznam ocen
-            zapriVnos();
+            zapriVseModalne();
             prikaziOcene();
         }
 
-        // Zapri modalna okna
-        function zapriModal() { document.getElementById("ocenaModal").style.display = "none"; }
-        function zapriPodrobnosti() { document.getElementById("podrobnostiModal").style.display = "none"; }
-        function zapriVnos() { document.getElementById("vnosModal").style.display = "none"; }
+        function prikaziModal(id) {
+            document.getElementById(id).style.display = "block";
+            document.getElementById("overlay").style.display = "block";
+        }
+
+        function zapriVseModalne() {
+            document.querySelectorAll(".modal").forEach(modal => modal.style.display = "none");
+            document.getElementById("overlay").style.display = "none";
+        }
     </script>
 
 </body>
