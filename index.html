@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Šolski Sledilnik</title>
+    <title>Redovalnica</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center; padding: 20px; }
         .container { display: none; max-width: 600px; margin: auto; }
@@ -75,6 +75,7 @@
         let geslo = "GESLO";
         let izbranPredmet = "";
         let novaOcena = "";
+        let trenutnoUrejenaOcena = null;
 
         function preveriGeslo() {
             if (document.getElementById("password").value === geslo) {
@@ -110,17 +111,21 @@
             let ocene = JSON.parse(localStorage.getItem(izbranPredmet)) || [];
             let tbody = document.getElementById("oceneTbody");
             tbody.innerHTML = "";
-            ocene.forEach(o => {
+            ocene.forEach((o, index) => {
                 let row = `<tr>
                     <td class="${o.barva}">${o.ocena}</td>
-                    <td><button onclick="poglejPodrobnosti()">?</button></td>
+                    <td><button onclick="poglejPodrobnosti(${index})">?</button></td>
                 </tr>`;
                 tbody.innerHTML += row;
             });
         }
 
-        function poglejPodrobnosti() {
-            alert("Podrobnosti ocen so še v izdelavi!");
+        function poglejPodrobnosti(index) {
+            let ocene = JSON.parse(localStorage.getItem(izbranPredmet)) || [];
+            trenutnoUrejenaOcena = index;
+            let ocena = ocene[trenutnoUrejenaOcena];
+            alert(`Podrobnosti za oceno: ${ocena.ocena}, tip: ${ocena.barva}, opombe: ${ocena.opombe}`);
+            odpriVnos();
         }
 
         function odpriVnos() {
@@ -142,20 +147,25 @@
             let opombe = document.getElementById("opombe").value;
             let ocena = { ocena: novaOcena, barva: tip, opombe: opombe };
             let ocene = JSON.parse(localStorage.getItem(izbranPredmet)) || [];
-            ocene.push(ocena);
+            if (trenutnoUrejenaOcena !== null) {
+                // Popravi obstoječo oceno
+                ocene[trenutnoUrejenaOcena] = ocena;
+            } else {
+                // Dodaj novo oceno
+                ocene.push(ocena);
+            }
             localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
             zapriVsaModalnaOkna();
             prikaziOcene();
         }
 
-        function odpriModal(id) {
-            document.getElementById("overlay").style.display = "block";
-            document.getElementById(id).style.display = "block";
-        }
-
         function zapriVsaModalnaOkna() {
             document.getElementById("overlay").style.display = "none";
             document.querySelectorAll(".modal").forEach(modal => modal.style.display = "none");
+        }
+
+        function zapriModal() {
+            zapriVsaModalnaOkna();
         }
     </script>
 
