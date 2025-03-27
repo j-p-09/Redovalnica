@@ -7,17 +7,16 @@
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center; padding: 20px; }
         .container { display: none; max-width: 600px; margin: auto; }
-        .predmet { display: block; padding: 15px; margin: 10px auto; background: #ffcc00; border-radius: 50px; font-weight: bold; cursor: pointer; width: 80%; }
-        .modal, .overlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; z-index: 10; }
-        .overlay { width: 100%; height: 100%; background: rgba(0,0,0,0.5); top: 0; left: 0; z-index: 5; }
+        .predmet { display: inline-block; padding: 15px 20px; margin: 10px; background: #ffcc00; border-radius: 50px; cursor: pointer; font-weight: bold; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; z-index: 1001; }
+        .overlay { display: none; position: fixed; width: 100%; height: 100%; background: rgba(0,0,0,0.3); top: 0; left: 0; z-index: 1000; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         td, th { border: 1px solid #ddd; padding: 8px; text-align: center; }
         .red { font-weight: bold; color: red; } .blue { font-weight: bold; color: blue; } .purple { font-weight: bold; color: purple; } .black { font-weight: bold; color: black; }
         .login { margin-top: 50px; }
         .hidden { display: none; }
-        button { display: block; margin: 10px auto; padding: 10px; font-size: 16px; cursor: pointer; background-color: white; border: 1px solid #ddd; border-radius: 5px; transition: background-color 0.3s; }
+        button { display: block; margin: 10px auto; padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: white; border: 1px solid #ddd; border-radius: 5px; transition: background-color 0.3s; }
         button:hover { background-color: #f1f1f1; }
-        .selected { background-color: green; color: white; }
         select, textarea { width: 100%; margin-top: 10px; padding: 10px; font-size: 16px; }
     </style>
 </head>
@@ -34,7 +33,7 @@
         <div id="predmeti"></div>
     </div>
 
-    <div class="overlay" id="overlay" onclick="zapriVseModal()"></div>
+    <div class="overlay" id="overlay" onclick="zapriVsaModalnaOkna()"></div>
 
     <div class="modal" id="ocenaModal">
         <h2 id="modalTitle"></h2>
@@ -47,7 +46,6 @@
             </thead>
             <tbody id="oceneTbody"></tbody>
         </table>
-        <p><strong>Povprečje:</strong> <span id="povprecje"></span></p>
         <button onclick="odpriVnos()">Vpis Ocene</button>
         <button onclick="zapriModal()">Zapri</button>
     </div>
@@ -55,12 +53,12 @@
     <div class="modal" id="vnosModal">
         <h2 id="vnosTitle"></h2>
         <div>
-            <button onclick="izberiOceno(this, 'NOC')">NOC</button>
-            <button onclick="izberiOceno(this, '1')">1</button>
-            <button onclick="izberiOceno(this, '2')">2</button>
-            <button onclick="izberiOceno(this, '3')">3</button>
-            <button onclick="izberiOceno(this, '4')">4</button>
-            <button onclick="izberiOceno(this, '5')">5</button>
+            <button onclick="izberiOceno('NOC')">NOC</button>
+            <button onclick="izberiOceno('1')">1</button>
+            <button onclick="izberiOceno('2')">2</button>
+            <button onclick="izberiOceno('3')">3</button>
+            <button onclick="izberiOceno('4')">4</button>
+            <button onclick="izberiOceno('5')">5</button>
         </div>
         <select id="tipOcene">
             <option value="red">Pisna ocena</option>
@@ -78,11 +76,6 @@
         let izbranPredmet = "";
         let novaOcena = "";
 
-        const predmeti = ["Matematika", "Slovenščina", "Angleščina", "Nemščina",
-            "Grafični in medijski procesi", "Grafično oblikovanje",
-            "Informacijsko komunikacijska tehnologija", "Kemija", "Fizika",
-            "Geografija", "Izbrana poglavja matematike", "Športna", "Umetnost", "Zgodovina"];
-
         function preveriGeslo() {
             if (document.getElementById("password").value === geslo) {
                 document.querySelector(".login").classList.add("hidden");
@@ -94,6 +87,7 @@
         }
 
         function prikaziPredmete() {
+            let predmeti = ["Matematika", "Slovenščina", "Angleščina", "Nemščina", "Grafični in medijski procesi", "Grafično oblikovanje", "Informacijsko komunikacijska tehnologija", "Kemija", "Fizika", "Geografija", "Izbrana poglavja matematike", "Športna", "Umetnost", "Zgodovina"];
             let div = document.getElementById("predmeti");
             div.innerHTML = "";
             predmeti.forEach(predmet => {
@@ -109,50 +103,60 @@
             izbranPredmet = predmet;
             document.getElementById("modalTitle").textContent = predmet;
             prikaziOcene();
-            document.getElementById("ocenaModal").style.display = "block";
-            document.getElementById("overlay").style.display = "block";
+            odpriModal("ocenaModal");
         }
 
         function prikaziOcene() {
             let ocene = JSON.parse(localStorage.getItem(izbranPredmet)) || [];
             let tbody = document.getElementById("oceneTbody");
             tbody.innerHTML = "";
-
-            let vsote = 0;
-            let stevec = 0;
-
             ocene.forEach(o => {
-                if (o.ocena !== "NOC") {
-                    vsote += parseFloat(o.ocena);
-                    stevec++;
-                }
-                tbody.innerHTML += `<tr><td class="${o.barva}">${o.ocena}</td><td onclick="odpriPodrobnosti(${o.id})">?</td></tr>`;
+                let row = `<tr>
+                    <td class="${o.barva}">${o.ocena}</td>
+                    <td><button onclick="poglejPodrobnosti()">?</button></td>
+                </tr>`;
+                tbody.innerHTML += row;
             });
-
-            let povprecje = stevec > 0 ? (vsote / stevec).toFixed(1) : "Ni ocen";
-            document.getElementById("povprecje").textContent = povprecje;
         }
 
-        function izberiOceno(gumb, ocena) {
-            document.querySelectorAll("#vnosModal button").forEach(btn => btn.classList.remove("selected"));
-            gumb.classList.add("selected");
+        function poglejPodrobnosti() {
+            alert("Podrobnosti ocen so še v izdelavi!");
+        }
+
+        function odpriVnos() {
+            document.getElementById("vnosTitle").textContent = izbranPredmet;
+            odpriModal("vnosModal");
+        }
+
+        function izberiOceno(ocena) {
             novaOcena = ocena;
+            alert("Izbrali ste oceno: " + novaOcena);
         }
 
         function shraniOceno() {
+            if (!novaOcena) {
+                alert("Izberite oceno!");
+                return;
+            }
             let tip = document.getElementById("tipOcene").value;
-            let opomba = document.getElementById("opombe").value;
+            let opombe = document.getElementById("opombe").value;
+            let ocena = { ocena: novaOcena, barva: tip, opombe: opombe };
             let ocene = JSON.parse(localStorage.getItem(izbranPredmet)) || [];
-
-            ocene.push({ id: ocene.length, ocena: novaOcena, barva: tip, opombe: opomba });
+            ocene.push(ocena);
             localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
-            zapriVnos();
+            zapriVsaModalnaOkna();
             prikaziOcene();
         }
 
-        function zapriModal() { document.getElementById("ocenaModal").style.display = "none"; }
-        function zapriVnos() { document.getElementById("vnosModal").style.display = "none"; }
-        function zapriVseModal() { zapriModal(); zapriVnos(); }
+        function odpriModal(id) {
+            document.getElementById("overlay").style.display = "block";
+            document.getElementById(id).style.display = "block";
+        }
+
+        function zapriVsaModalnaOkna() {
+            document.getElementById("overlay").style.display = "none";
+            document.querySelectorAll(".modal").forEach(modal => modal.style.display = "none");
+        }
     </script>
 
 </body>
