@@ -117,7 +117,10 @@
             ocene.forEach((o, i) => {
                 let row = `<tr>
                     <td class="${o.barva}">${o.staraOcena ? `<span class="staraOcena">${o.staraOcena}</span> ` : ""}${o.ocena}</td>
-                    <td><button onclick="popraviOceno(${i})">?</button></td>
+                    <td>
+                        <button onclick="popraviOceno(${i})">?</button>
+                        <button onclick="izbrišiOceno(${i})">Brisanje</button>
+                    </td>
                 </tr>`;
                 tbody.innerHTML += row;
             });
@@ -132,6 +135,15 @@
                 o.staraOcena = o.ocena;
                 o.ocena = nova;
                 ocene[index] = o;
+                localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
+                prikaziOcene();
+            }
+        }
+
+        function izbrišiOceno(index) {
+            let ocene = JSON.parse(localStorage.getItem(izbranPredmet));
+            if (confirm("Ste prepričani, da želite izbrisati to oceno?")) {
+                ocene.splice(index, 1);
                 localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
                 prikaziOcene();
             }
@@ -180,3 +192,4 @@
 
 </body>
 </html>
+
