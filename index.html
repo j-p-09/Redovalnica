@@ -17,6 +17,7 @@
         .hidden { display: none; }
         button { display: block; margin: 10px auto; padding: 10px; font-size: 16px; cursor: pointer; background-color: white; border: 1px solid #ddd; border-radius: 5px; transition: background-color 0.3s; }
         button:hover { background-color: #f1f1f1; }
+        .selected { background-color: green; color: white; }
         select, textarea { width: 100%; margin-top: 10px; padding: 10px; font-size: 16px; }
     </style>
 </head>
@@ -54,12 +55,12 @@
     <div class="modal" id="vnosModal">
         <h2 id="vnosTitle"></h2>
         <div>
-            <button onclick="izberiOceno('NOC')">NOC</button>
-            <button onclick="izberiOceno('1')">1</button>
-            <button onclick="izberiOceno('2')">2</button>
-            <button onclick="izberiOceno('3')">3</button>
-            <button onclick="izberiOceno('4')">4</button>
-            <button onclick="izberiOceno('5')">5</button>
+            <button onclick="izberiOceno(this, 'NOC')">NOC</button>
+            <button onclick="izberiOceno(this, '1')">1</button>
+            <button onclick="izberiOceno(this, '2')">2</button>
+            <button onclick="izberiOceno(this, '3')">3</button>
+            <button onclick="izberiOceno(this, '4')">4</button>
+            <button onclick="izberiOceno(this, '5')">5</button>
         </div>
         <select id="tipOcene">
             <option value="red">Pisna ocena</option>
@@ -77,12 +78,10 @@
         let izbranPredmet = "";
         let novaOcena = "";
 
-        const predmeti = [
-            "Matematika", "Slovenščina", "Angleščina", "Nemščina",
+        const predmeti = ["Matematika", "Slovenščina", "Angleščina", "Nemščina",
             "Grafični in medijski procesi", "Grafično oblikovanje",
             "Informacijsko komunikacijska tehnologija", "Kemija", "Fizika",
-            "Geografija", "Izbrana poglavja matematike", "Športna", "Umetnost", "Zgodovina"
-        ];
+            "Geografija", "Izbrana poglavja matematike", "Športna", "Umetnost", "Zgodovina"];
 
         function preveriGeslo() {
             if (document.getElementById("password").value === geslo) {
@@ -127,35 +126,33 @@
                     vsote += parseFloat(o.ocena);
                     stevec++;
                 }
-                tbody.innerHTML += `<tr><td class="${o.barva}">${o.ocena}</td><td>?</td></tr>`;
+                tbody.innerHTML += `<tr><td class="${o.barva}">${o.ocena}</td><td onclick="odpriPodrobnosti(${o.id})">?</td></tr>`;
             });
 
             let povprecje = stevec > 0 ? (vsote / stevec).toFixed(1) : "Ni ocen";
             document.getElementById("povprecje").textContent = povprecje;
         }
 
-        function zapriModal() {
-            document.getElementById("ocenaModal").style.display = "none";
-            document.getElementById("overlay").style.display = "none";
-        }
-
-        function odpriVnos() {
-            document.getElementById("vnosModal").style.display = "block";
-        }
-
-        function zapriVnos() {
-            document.getElementById("vnosModal").style.display = "none";
-        }
-
-        function izberiOceno(ocena) {
+        function izberiOceno(gumb, ocena) {
+            document.querySelectorAll("#vnosModal button").forEach(btn => btn.classList.remove("selected"));
+            gumb.classList.add("selected");
             novaOcena = ocena;
-            alert("Izbrali ste oceno: " + novaOcena);
         }
 
-        function zapriVseModal() {
-            zapriModal();
+        function shraniOceno() {
+            let tip = document.getElementById("tipOcene").value;
+            let opomba = document.getElementById("opombe").value;
+            let ocene = JSON.parse(localStorage.getItem(izbranPredmet)) || [];
+
+            ocene.push({ id: ocene.length, ocena: novaOcena, barva: tip, opombe: opomba });
+            localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
             zapriVnos();
+            prikaziOcene();
         }
+
+        function zapriModal() { document.getElementById("ocenaModal").style.display = "none"; }
+        function zapriVnos() { document.getElementById("vnosModal").style.display = "none"; }
+        function zapriVseModal() { zapriModal(); zapriVnos(); }
     </script>
 
 </body>
