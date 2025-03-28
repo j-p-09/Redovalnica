@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Šolski Sledilnik</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px; position: relative; }
+    .container { display: none; max-width: 600px; margin: auto; position: relative; }
+    .predmet { display: inline-block; padding: 15px 20px; margin: 10px; background: #ffcc00; border-radius: 50px; cursor: pointer; font-weight: bold; }
+    .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; z-index: 1002; max-width: 90%; max-height: 80vh; overflow-y: auto; }
+    .overlay { display: none; position: fixed; width: 100%; height: 100%; background: rgba(0,0,0,0.3); top: 0; left: 0; z-index: 1001; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    td, th { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    .red { font-weight: bold; color: red; } 
+    .blue { font-weight: bold; color: blue; } 
+    .purple { font-weight: bold; color: purple; } 
+    .black { font-weight: bold; color: black; }
+    .staraOcena { font-size: 12px; opacity: 0.6; }
+    button { display: block; margin: 10px auto; padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: white; border: 1px solid #ddd; border-radius: 5px; transition: background-color 0.3s; }
+    button:hover { background-color: #f1f1f1; }
+    .selected { background-color: lightgray !important; }
+    /* Gumb za masovni vnos ocen */
+    #vpisOcenjevanjaBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #ff6666;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #vpisOcenjevanjaBtn:hover {
+      background-color: #ff3333;
+    }
+    /* Stiliranje masovnega vnosa */
+    #masovniVnosPredmeti {
+      margin-top: 10px;
+      text-align: left;
+    }
+    .masovniPredmet {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 5px 0;
+      padding: 5px;
+      background: #eee;
+      border-radius: 5px;
+    }
+    .masovniGumbi button {
+      margin: 0 2px;
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login">
+    <h2>Vpiši geslo za dostop:</h2>
+    <input type="password" id="password">
+    <button onclick="preveriGeslo()">Vpiši</button>
+  </div>
+
+  <div class="container">
+    <h1>Šolski Sledilnik</h1>
+    <!-- Gumb za masovni vnos ocen -->
+    <button id="vpisOcenjevanjaBtn" onclick="odpriMasovniVnos()">VPIŠI OCENJEVANJE</button>
+    <div id="predmeti"></div>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="zapriVseModalne()"></div>
+
+  <!-- Obstoječi modal za ogled ocen in popravke -->
+  <div class="modal" id="ocenaModal">
+    <h2 id="modalTitle"></h2>
+    <table>
+      <thead>
+        <tr><th>Ocena</th><th>?</th></tr>
+      </thead>
+      <tbody id="oceneTbody"></tbody>
+    </table>
+    <button onclick="odpriVnos()">Vpis Ocene</button>
+    <button onclick="zapriVseModalne()">Zapri</button>
+  </div>
+
+  <!-- Obstoječi modal za individualni vnos ocen -->
+  <div class="modal" id="vnosModal">
+    <h2 id="vnosTitle"></h2>
+    <div id="oceneGumbi">
+      <button onclick="izberiOceno(this, 'NOC')">NOC</button>
+      <button onclick="izberiOceno(this, '1')">1</button>
+      <button onclick="izberiOceno(this, '2')">2</button>
+      <button onclick="izberiOceno(this, '3')">3</button>
+      <button onclick="izberiOceno(this, '4')">4</button>
+      <button onclick="izberiOceno(this, '5')">5</button>
+    </div>
+    <select id="tipOcene">
+      <option value="red">Pisna ocena</option>
+      <option value="blue">Ustna ocena</option>
+      <option value="purple">Izdelek</option>
+      <option value="black">Zaključna ocena</option>
+    </select>
+    <textarea id="opombe" placeholder="Opombe..."></textarea>
+    <button onclick="shraniOceno()">Shrani Oceno</button>
+    <button onclick="zapriVseModalne()">Prekliči</button>
+  </div>
+
+  <!-- Nov modal za masovni vnos ocen -->
+  <div class="modal" id="masovniVnosModal">
+    <h2>Vpiši ocenjevanje</h2>
+    <label for="tipMasovneOcene">Tip ocene:</label>
+    <select id="tipMasovneOcene">
+      <option value="red">Pisna ocena</option>
+      <option value="blue">Ustna ocena</option>
+      <option value="purple">Izdelek</option>
+      <option value="black">Zaključna ocena</option>
+    </select>
+    <div id="masovniVnosPredmeti"></div>
+    <button onclick="shraniMasovneOcene()">Shrani Ocene</button>
+    <button onclick="zapriVseModalne()">Prekliči</button>
+  </div>
+
+  <script>
+    let geslo = "GESLO";
+    let izbranPredmet = "";
+    let novaOcena = "";
+    let izbraniGumb = null;
+    // Objekt, kjer bomo shranjevali masovne izbire ocen
+    let masovniOcene = {};
+
+    const predmeti = [
+      "Matematika", "Slovenščina", "Angleščina", "Nemščina",
+      "Grafični in medijski procesi", "Grafično oblikovanje",
+      "Informacijsko komunikacijska tehnologija", "Kemija",
+      "Fizika", "Geografija", "Izbrana poglavja matematike",
+      "Športna", "Umetnost", "Zgodovina"
+    ];
+
+    function preveriGeslo() {
+      if (document.getElementById("password").value === geslo) {
+        document.querySelector(".login").style.display = "none";
+        document.querySelector(".container").style.display = "block";
+        prikaziPredmete();
+      } else {
+        alert("Napačno geslo!");
+      }
+    }
+
+    function prikaziPredmete() {
+      let div = document.getElementById("predmeti");
+      div.innerHTML = "";
+      predmeti.forEach(predmet => {
+        let btn = document.createElement("div");
+        btn.className = "predmet";
+        btn.textContent = predmet;
+        btn.onclick = () => odpriOcene(predmet);
+        div.appendChild(btn);
+      });
+    }
+
+    function odpriOcene(predmet) {
+      izbranPredmet = predmet;
+      document.getElementById("modalTitle").textContent = predmet;
+      prikaziOcene();
+      prikaziModal("ocenaModal");
+    }
+
+    function prikaziOcene() {
+      let ocene = JSON.parse(localStorage.getItem(izbranPredmet)) || [];
+      let tbody = document.getElementById("oceneTbody");
+      tbody.innerHTML = "";
+      ocene.forEach((o, i) => {
+        let row = `<tr>
+            <td class="${o.barva}">${o.staraOcena ? `<span class="staraOcena">${o.staraOcena}</span> ` : ""}${o.ocena}</td>
+            <td><button onclick="popraviOceno(${i})">?</button></td>
+          </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    function popraviOceno(index) {
+      let ocene = JSON.parse(localStorage.getItem(izbranPredmet));
+      let o = ocene[index];
+
+      let nova = prompt(`Popravi oceno (trenutna: ${o.ocena})`, o.ocena);
+      if (nova !== null && nova !== "") {
+        o.staraOcena = o.ocena;
+        o.ocena = nova;
+        ocene[index] = o;
+        localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
+        prikaziOcene();
+      }
+    }
+
+    function odpriVnos() {
+      document.getElementById("vnosTitle").textContent = izbranPredmet;
+      prikaziModal("vnosModal");
+    }
+
+    function izberiOceno(gumb, ocena) {
+      if (izbraniGumb) izbraniGumb.classList.remove("selected");
+      izbraniGumb = gumb;
+      izbraniGumb.classList.add("selected");
+      novaOcena = ocena;
+    }
+
+    function shraniOceno() {
+      let tip = document.getElementById("tipOcene").value;
+      let opombe = document.getElementById("opombe").value;
+
+      if (!novaOcena) {
+        alert("Izberite oceno!");
+        return;
+      }
+
+      let ocenaObj = { ocena: novaOcena, tip, barva: tip, opombe };
+      let ocene = JSON.parse(localStorage.getItem(izbranPredmet)) || [];
+      ocene.push(ocenaObj);
+      localStorage.setItem(izbranPredmet, JSON.stringify(ocene));
+
+      zapriVseModalne();
+      prikaziOcene();
+    }
+
+    function prikaziModal(id) {
+      document.getElementById(id).style.display = "block";
+      document.getElementById("overlay").style.display = "block";
+    }
+
+    function zapriVseModalne() {
+      document.querySelectorAll(".modal").forEach(modal => modal.style.display = "none");
+      document.getElementById("overlay").style.display = "none";
+      // Ob resetu masovnega vnosa počistimo tudi izbire
+      masovniOcene = {};
+    }
+
+    // Funkcije za masovni vnos ocen
+    function odpriMasovniVnos() {
+      // Resetiramo morebitne prejšnje izbire
+      masovniOcene = {};
+      let container = document.getElementById("masovniVnosPredmeti");
+      container.innerHTML = "";
+      predmeti.forEach(predmet => {
+        // Ustvarimo vrstico za vsak predmet
+        let row = document.createElement("div");
+        row.className = "masovniPredmet";
+        row.innerHTML = `
+          <span>${predmet}</span>
+          <div class="masovniGumbi">
+            <button onclick="izberiMasovnoOceno(this, '${predmet}', 'NOC')">NOC</button>
+            <button onclick="izberiMasovnoOceno(this, '${predmet}', '1')">1</button>
+            <button onclick="izberiMasovnoOceno(this, '${predmet}', '2')">2</button>
+            <button onclick="izberiMasovnoOceno(this, '${predmet}', '3')">3</button>
+            <button onclick="izberiMasovnoOceno(this, '${predmet}', '4')">4</button>
+            <button onclick="izberiMasovnoOceno(this, '${predmet}', '5')">5</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+      prikaziModal("masovniVnosModal");
+    }
+
+    function izberiMasovnoOceno(button, predmet, ocena) {
+      // Poiščemo star izbor v isti vrstici in ga odstranimo
+      let row = button.parentElement;
+      let buttons = row.querySelectorAll("button");
+      buttons.forEach(btn => btn.classList.remove("selected"));
+      button.classList.add("selected");
+      // Shranimo izbrano oceno za ta predmet
+      masovniOcene[predmet] = ocena;
+    }
+
+    function shraniMasovneOcene() {
+      let tip = document.getElementById("tipMasovneOcene").value;
+      // Za vsak predmet, če je bila izbrana ocena, jo shranimo v localStorage
+      predmeti.forEach(predmet => {
+        if (masovniOcene[predmet]) {
+          let ocene = JSON.parse(localStorage.getItem(predmet)) || [];
+          ocene.push({ ocena: masovniOcene[predmet], tip, barva: tip });
+          localStorage.setItem(predmet, JSON.stringify(ocene));
+        }
+      });
+      zapriVseModalne();
+    }
+  </script>
+
+</body>
+</html>
