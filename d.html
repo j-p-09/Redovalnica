@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Šolska Tabela</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            border: 1px solid #cccccc;
+            text-align: center;
+            padding: 12px;
+            min-width: 150px;
+            font-weight: bold;
+            position: relative;
+        }
+
+        th {
+            background-color: #808080;
+            color: white;
+            font-size: 1.1em;
+        }
+
+        /* Okvirček za vnos ocen */
+        .input-box {
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            width: 40px;
+            height: 20px;
+            font-size: 14px;
+            text-align: center;
+            border-radius: 5px;
+            border: 2px solid #aaaaaa;
+            background-color: #e0e0e0;
+        }
+
+        .pisna { color: red; margin-right: 8px; cursor: pointer; }
+        .ustna { color: blue; margin-right: 8px; cursor: pointer; }
+        .izdelek { color: green; margin-right: 8px; cursor: pointer; }
+
+        .old-grade {
+            font-size: 0.8em;
+            opacity: 0.6;
+            margin-right: 5px;
+        }
+
+        button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            border: 2px solid transparent;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        button.pisna { background-color: #f8c6c6; }
+        button.ustna { background-color: #c6e1f8; }
+        button.izdelek { background-color: #c6f8c6; }
+        
+        .selected { border: 2px solid black !important; }
+
+        /* Pogovorno okno */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .modal button {
+            margin-top: 10px;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Šolska Tabela</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Predmet</th>
+            <th>Prvo ocenjevalno obdobje</th>
+            <th>Drugo ocenjevalno obdobje</th>
+            <th>Konec</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><b>SLO</b><br>Slovenščina</td>
+            <td data-subject="Slovenščina" data-period="Prvo"></td>
+            <td data-subject="Slovenščina" data-period="Drugo"></td>
+            <td data-subject="Slovenščina" data-period="Konec" onclick="openEndModal('Slovenščina')"></td>
+        </tr>
+        <tr>
+            <td><b>ANJ</b><br>Angleščina</td>
+            <td data-subject="Angleščina" data-period="Prvo"></td>
+            <td data-subject="Angleščina" data-period="Drugo"></td>
+            <td data-subject="Angleščina" data-period="Konec" onclick="openEndModal('Angleščina')"></td>
+        </tr>
+        <tr>
+            <td><b>MAT</b><br>Matematika</td>
+            <td data-subject="Matematika" data-period="Prvo"></td>
+            <td data-subject="Matematika" data-period="Drugo"></td>
+            <td data-subject="Matematika" data-period="Konec" onclick="openEndModal('Matematika')"></td>
+        </tr>
+        <tr>
+            <td><b>FIZ</b><br>Fizika</td>
+            <td data-subject="Fizika" data-period="Prvo"></td>
+            <td data-subject="Fizika" data-period="Drugo"></td>
+            <td data-subject="Fizika" data-period="Konec" onclick="openEndModal('Fizika')"></td>
+        </tr>
+        <tr>
+            <td><b>GEO</b><br>Geografija</td>
+            <td data-subject="Geografija" data-period="Prvo"></td>
+            <td data-subject="Geografija" data-period="Drugo"></td>
+            <td data-subject="Geografija" data-period="Konec" onclick="openEndModal('Geografija')"></td>
+        </tr>
+        <tr>
+            <td><b>GMP</b><br>Grafični in medijski procesi</td>
+            <td data-subject="Grafični in medijski procesi" data-period="Prvo"></td>
+            <td data-subject="Grafični in medijski procesi" data-period="Drugo"></td>
+            <td data-subject="Grafični in medijski procesi" data-period="Konec" onclick="openEndModal('Grafični in medijski procesi')"></td>
+        </tr>
+        <tr>
+            <td><b>IKT</b><br>Informa. Komuni. tehnologija</td>
+            <td data-subject="Informa. Komuni. tehnologija" data-period="Prvo"></td>
+            <td data-subject="Informa. Komuni. tehnologija" data-period="Drugo"></td>
+            <td data-subject="Informa. Komuni. tehnologija" data-period="Konec" onclick="openEndModal('Informa. Komuni. tehnologija')"></td>
+        </tr>
+        <tr>
+            <td><b>GOB</b><br>Grafično oblikovanje</td>
+            <td data-subject="Grafično oblikovanje" data-period="Prvo"></td>
+            <td data-subject="Grafično oblikovanje" data-period="Drugo"></td>
+            <td data-subject="Grafično oblikovanje" data-period="Konec" onclick="openEndModal('Grafično oblikovanje')"></td>
+        </tr>
+        <tr>
+            <td><b>KEM</b><br>Kemija</td>
+            <td data-subject="Kemija" data-period="Prvo"></td>
+            <td data-subject="Kemija" data-period="Drugo"></td>
+            <td data-subject="Kemija" data-period="Konec" onclick="openEndModal('Kemija')"></td>
+        </tr>
+        <tr>
+            <td><b>NEJ</b><br>Nemščina</td>
+            <td data-subject="Nemščina" data-period="Prvo"></td>
+            <td data-subject="Nemščina" data-period="Drugo"></td>
+            <td data-subject="Nemščina" data-period="Konec" onclick="openEndModal('Nemščina')"></td>
+        </tr>
+        <tr>
+            <td><b>ŠVZ</b><br>Športna vzgoja</td>
+            <td data-subject="Športna vzgoja" data-period="Prvo"></td>
+            <td data-subject="Športna vzgoja" data-period="Drugo"></td>
+            <td data-subject="Športna vzgoja" data-period="Konec" onclick="openEndModal('Športna vzgoja')"></td>
+        </tr>
+        <tr>
+            <td><b>UME</b><br>Umetnost</td>
+            <td data-subject="Umetnost" data-period="Prvo"></td>
+            <td data-subject="Umetnost" data-period="Drugo"></td>
+            <td data-subject="Umetnost" data-period="Konec" onclick="openEndModal('Umetnost')"></td>
+        </tr>
+        <tr>
+            <td><b>ZGO</b><br>Zgodovina</td>
+            <td data-subject="Zgodovina" data-period="Prvo"></td>
+            <td data-subject="Zgodovina" data-period="Drugo"></td>
+            <td data-subject="Zgodovina" data-period="Konec" onclick="openEndModal('Zgodovina')"></td>
+        </tr>
+        <tr>
+            <td><b>IPM</b><br>Izbrana poglavja matematike</td>
+            <td data-subject="Izbrana poglavja matematike" data-period="Prvo"></td>
+            <td data-subject="Izbrana poglavja matematike" data-period="Drugo"></td>
+            <td data-subject="Izbrana poglavja matematike" data-period="Konec" onclick="openEndModal('Izbrana poglavja matematike')"></td>
+        </tr>
+    </tbody>
+</table>
+
+<br>
+<button class="pisna" onclick="setType('pisna')">PISNA OCENA</button>
+<button class="ustna" onclick="setType('ustna')">USTNA OCENA</button>
+<button class="izdelek" onclick="setType('izdelek')">IZDELEK</button>
+
+<!-- Pogovorno okno za urejanje ocen -->
+<div class="overlay" id="overlay"></div>
+<div class="modal" id="modal">
+    <h3>Uredi oceno</h3>
+    <input type="text" id="editGradeInput">
+    <br>
+    <button onclick="saveEdit()">Shrani</button>
+    <button onclick="deleteGrade()">Izbriši</button>
+    <button onclick="closeModal()">Prekliči</button>
+</div>
+
+<!-- Pogovorno okno za konec -->
+<div class="overlay" id="endOverlay"></div>
+<div class="modal" id="endModal">
+    <h3>Zaključna ocena za <span id="subjectName"></span></h3>
+    <p>Povprečje: <span id="averageGrade"></span></p>
+    <input type="text" id="endGradeInput">
+    <br>
+    <button onclick="saveEndGrade()">Shrani Zaključno Oceno</button>
+    <button onclick="closeEndModal()">Prekliči</button>
+</div>
+
+<script>
+    let selectedType = "ustna";
+    let grades = JSON.parse(localStorage.getItem("grades")) || [];
+    let currentEditId = null;
+    let currentSubject = null;
+
+    function renderGrades() {
+        document.querySelectorAll("td[data-subject]").forEach(td => {
+            td.innerHTML = "";
+            let subject = td.getAttribute("data-subject");
+            let period = td.getAttribute("data-period");
+            grades.filter(g => g.subject === subject && g.period === period).forEach(g => {
+                let span = document.createElement("span");
+                span.className = g.type;
+                span.innerHTML = g.oldGrade ? `<span class="old-grade">${g.oldGrade}</span> ${g.grade}` : g.grade;
+                span.onclick = () => openModal(g.id);
+                td.appendChild(span);
+            });
+
+            if (period !== "Konec") {
+                let input = document.createElement("input");
+                input.type = "text";
+                input.className = `input-box`;
+                input.onkeypress = (event) => handleKeyPress(event, subject, period, td);
+                td.appendChild(input);
+            }
+        });
+    }
+
+    function handleKeyPress(event, subject, period, td) {
+        if (event.key === "Enter") {
+            let input = event.target;
+            let grade = input.value.trim();
+            if (grade) {
+                let id = grades.length ? Math.max(...grades.map(g => g.id)) + 1 : 1;
+                grades.push({ id, subject, period, grade, type: selectedType, oldGrade: "" });
+                localStorage.setItem("grades", JSON.stringify(grades));
+                input.value = "";
+                renderGrades();
+            }
+        }
+    }
+
+    function setType(type) {
+        selectedType = type;
+        document.querySelectorAll("button").forEach(btn => btn.classList.remove("selected"));
+        document.querySelector(`button.${type}`).classList.add("selected");
+    }
+
+    function openModal(id) {
+        currentEditId = id;
+        let grade = grades.find(g => g.id === id);
+        document.getElementById("editGradeInput").value = grade.grade;
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("modal").style.display = "block";
+    }
+
+    function closeModal() {
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("modal").style.display = "none";
+    }
+
+    function saveEdit() {
+        let newGrade = document.getElementById("editGradeInput").value;
+        let grade = grades.find(g => g.id === currentEditId);
+        grade.oldGrade = grade.grade;
+        grade.grade = newGrade;
+        localStorage.setItem("grades", JSON.stringify(grades));
+        closeModal();
+        renderGrades();
+    }
+
+    function deleteGrade() {
+        grades = grades.filter(g => g.id !== currentEditId);
+        localStorage.setItem("grades", JSON.stringify(grades));
+        closeModal();
+        renderGrades();
+    }
+
+    function openEndModal(subject) {
+        currentSubject = subject;
+        let subjectGrades = grades.filter(g => g.subject === subject);
+        let average = subjectGrades.reduce((sum, g) => sum + parseFloat(g.grade), 0) / subjectGrades.length;
+        document.getElementById("averageGrade").innerText = isNaN(average) ? "N/A" : average.toFixed(2);
+        document.getElementById("subjectName").innerText = subject;
+        document.getElementById("endOverlay").style.display = "block";
+        document.getElementById("endModal").style.display = "block";
+    }
+
+    function closeEndModal() {
+        document.getElementById("endOverlay").style.display = "none";
+        document.getElementById("endModal").style.display = "none";
+    }
+
+    function saveEndGrade() {
+        let endGrade = document.getElementById("endGradeInput").value.trim();
+        if (endGrade) {
+            let id = grades.length ? Math.max(...grades.map(g => g.id)) + 1 : 1;
+            grades.push({ id, subject: currentSubject, period: "Konec", grade: endGrade, type: "black", oldGrade: "" });
+            localStorage.setItem("grades", JSON.stringify(grades));
+            closeEndModal();
+            renderGrades();
+        }
+    }
+
+    window.onload = renderGrades;
+</script>
+
+</body>
+</html>
